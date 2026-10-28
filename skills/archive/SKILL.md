@@ -24,19 +24,21 @@ evidence. Preserve exact identifiers, paths, commands, UI literals and quotation
    ask, listing filenames. Never infer completion from an archive filename alone.
 2. Read the entire change. Require `Status: done`, every task `[x]`, no unresolved
    questions, and passing evidence for every requirement and required project
-   gate. Missing, skipped, failed or unavailable checks block archival. If code
-   has changed since verification, rerun the affected checks before proceeding.
+   gate. Missing, skipped, failed or unavailable checks block archival. Reuse
+   complete, current passing evidence; if code has changed since verification,
+   rerun only the affected checks before proceeding.
    Report gaps and return to `apply`; never invent evidence or force completion.
    Require `Scope: global` (project-wide rules) or `Scope: area:<id>` (one area,
    e.g. `area:login`), with stable English lowercase kebab-case area IDs. Clarify
-   missing/ambiguous Scope via `change`. Scan current spec titles/Scope. Always
-   reread every global spec, regardless of the request's area. Read area-specific
-   spec bodies only when their Scope matches an area actually involved in the
-   approved request; read every spec for those areas. A global request does not
-   automatically involve every area: with no specific area involved, read only
-   global specs. Determine involved areas from the request and nearby code; ask
-   if unclear rather than loading other areas speculatively. Unresolved conflicts
-   block archival and require `change`, renewed approval and verification.
+   missing/ambiguous Scope via `change`. Scan current spec titles/Scope. For an
+   area-scoped change, read every spec for the involved areas and only global
+   specs whose titles or Goals indicate relevance to the change or target spec;
+   read a global spec if relevance is unclear. For a global-scoped change, read
+   every global spec. A global request does not automatically involve every area:
+   read area-specific specs only for areas actually involved. Determine involved
+   areas from the request and nearby code; ask if unclear rather than loading
+   other areas speculatively. Unresolved conflicts block archival and require
+   `change`, renewed approval and verification.
 3. Check `Base`: `new` means `specs/<id>.md` must not exist; otherwise its exact-byte
    SHA-256 must match. A conflict requires reconciliation via `change`, renewed
    approval and verification. Do not discard other changes or reset Base silently.

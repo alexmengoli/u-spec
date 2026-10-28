@@ -123,7 +123,8 @@ area is involved, read only global specs. Determine involved areas from the requ
 and nearby code; ask if unclear rather than loading other areas speculatively.
 Missing or ambiguous Scope must be clarified, not treated as irrelevant. Conflicts
 require an explicit user decision, not silent overrides. The same selection rule
-applies during revision, implementation and archival; unrelated spec bodies and
+applies during revision and implementation. During archival, follow the narrower
+global-spec relevance rule in `skills/archive/SKILL.md`; unrelated spec bodies and
 archives stay unloaded.
 
 For example, a Login request must read global typography/theme rules and all
