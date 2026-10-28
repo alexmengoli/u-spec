@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/u-spec.svg" alt="u-spec logo" width="300">
+</p>
+
 # u-spec
 
 Four skills for lightweight spec-driven development, inspired by
