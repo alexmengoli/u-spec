@@ -14,6 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify skill versions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($skill in 'propose', 'change', 'apply', 'archive') {
+            $content = Get-Content "skills/$skill/SKILL.md" -Raw
+            $versions = [regex]::Matches($content, '(?m)^Framework version: ([^\r\n]+)\r?$')
+            if ($versions.Count -ne 1) {
+              throw "Expected exactly one Framework version in skills/$skill/SKILL.md"
+            }
+            $version = $versions[0].Groups[1].Value
+            if ($version -cne $env:GITHUB_REF_NAME) {
+              throw "Skill $skill declares $version but release tag is $env:GITHUB_REF_NAME"
+            }
+          }
+
       - name: Zip skills folder
         run: zip -r "skills-${GITHUB_REF_NAME}.zip" skills
 

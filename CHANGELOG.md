@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.2.0] - 2026-10-29
+
+### Added
+- All four skills create or synchronize `u-spec/README.md` with the public repository link, author Alex Mengoli and the last-used skill's framework version, preserving user content and avoiding unnecessary rewrites. Existing managed blocks without an author gain the field on the next invocation.
+- Self-contained framework version declarations in each skill and a release check that requires all declarations to match the release tag before packaging.
+- PowerShell version bump script accepting an explicit stable version, with `-WhatIf`, validation of all four declarations before writing, and preservation of existing file formatting.
+
 ## [v1.1.0] - 2026-10-28
 
 ### Changed

@@ -5,6 +5,8 @@ description: "Use when asked to propose or plan a u-spec feature, fix, or small 
 
 # Propose
 
+Framework version: v1.2.0
+
 Create a small, unambiguous change specification. Respond in the user's language.
 Write all workflow Markdown files in English, including saved questions and
 evidence. Preserve exact identifiers, paths, commands, UI literals and quotations.
@@ -14,10 +16,39 @@ evidence. Preserve exact identifiers, paths, commands, UI literals and quotation
 - Resolve the target project root; ask if ambiguous. Store every workflow artifact
   under `<project-root>/u-spec/`, never relative to the installed skill directory.
 - Ensure `changes/`, `specs/`, `archive/` exist there. Each contains only direct
-  `.md` files, no subdirectories. Do not create other workflow files or folders.
+   `.md` files, no subdirectories. The provenance README below is the only extra
+   workflow file allowed; do not create other workflow files or folders.
 - Scan current spec titles and Scope metadata; load applicable bodies as below,
    not unrelated specs, archives or other skills. No CLI dependency is required.
 - Do not modify application code, tests, dependencies or project configuration.
+
+## Framework Provenance
+
+At every invocation, after resolving the target project root and before the
+procedure, synchronize `<project-root>/u-spec/README.md`. Create its parent if
+needed, never write relative to the installed skill directory. If absent, create
+this English Markdown, substituting this skill's Framework version:
+
+```markdown
+<!-- u-spec:provenance -->
+# u-spec
+
+Repository: [u-spec](https://github.com/alexmengoli/u-spec)
+Author: Alex Mengoli
+Version: <framework-version>
+<!-- /u-spec:provenance -->
+```
+
+For an existing file, require exactly one ordered pair of these markers containing
+one Repository line, one Version line and at most one Author line. Update only
+these managed lines inside the block. If Author is missing, insert
+`Author: Alex Mengoli` immediately after Repository; otherwise set it to that
+value. Preserve all other content. If already correct, do not rewrite the file.
+If the file is unrecognized or ambiguous, ask before changing it; never overwrite
+user content. Use only this skill's declared version, not GitHub, the host project's
+version or another skill. It records the last-used skill version, even if older
+than the previous value. Verify the saved link, author and version. This metadata update
+does not bypass any workflow prerequisite or authorize application changes.
 
 ## Procedure
 

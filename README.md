@@ -71,6 +71,7 @@ Request: "Use propose to create a Login component."
 
 ```text
 <project-root>/u-spec/
+  README.md
   changes/
     product-search.md
   specs/
@@ -83,6 +84,19 @@ These three directories contain only direct `.md` files, without subdirectories
 or auxiliary files. Skills create the directories on first use. All workflow
 artifacts stay here; code and tests remain in the project's normal locations.
 No separate proposal, design, task, log or configuration documents are created.
+
+The root `u-spec/README.md` is the only additional workflow file. On every skill
+invocation, after resolving the project root, the bot creates or synchronizes a
+marked provenance block containing the [public repository](https://github.com/alexmengoli/u-spec)
+link, author Alex Mengoli and the invoked skill's declared framework version.
+This also applies to existing projects without the file; older managed blocks
+without an Author line gain `Author: Alex Mengoli` on the next invocation.
+The version identifies the last-used skill, not the
+project's initial version or the latest online release; using an older installed
+skill can lower it. No network request is needed. Text outside the managed fields
+is preserved, unchanged files are not rewritten, and unrecognized or ambiguous
+files require clarification before modification. This metadata write never
+bypasses proposal, approval or verification prerequisites.
 
 The ID identifies a spec and stays stable across revisions: a subsequent search
 change reuses `product-search` rather than creating a nearly identical spec.
@@ -153,3 +167,29 @@ There is no question-count limit: ask a few focused questions per turn without
 repeating answered questions. Compactness never authorizes invented requirements.
 These are agent instructions, not programmatically enforced constraints; their
 effectiveness depends on the executing bot's capabilities.
+
+## Releasing
+
+Use PowerShell to update all four skill versions before tagging a release:
+
+```powershell
+./scripts/bump-version.ps1 -Version 1.2.0 -WhatIf
+./scripts/bump-version.ps1 -Version 1.2.0
+```
+
+The optional `v` prefix is accepted; declarations are always saved as `vMAJOR.MINOR.PATCH`.
+Only stable versions are supported, and the new version must be greater than the
+current version. The script resolves paths from its own location, validates all
+four declarations before writing, and preserves encoding and line endings in the
+UTF-8 skill files. Missing, invalid, duplicate or inconsistent declarations stop
+the operation without updates. `-WhatIf` previews the operation without writing.
+The script does not change the changelog, create commits or tags, or publish a
+release; complete those steps separately.
+
+The single `Framework version: ...` line in each of the four
+`skills/<name>/SKILL.md` files must match the exact intended tag, including the
+`v` prefix. Keep all four values identical and update the changelog. The release
+workflow checks these declarations against the tag before packaging the skills;
+missing, duplicate or mismatched declarations block publication. Each installed
+skill carries its own version and provenance instructions without runtime access
+to this repository's changelog or release workflow.
