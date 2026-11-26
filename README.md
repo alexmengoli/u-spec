@@ -10,11 +10,32 @@ work. A change can update several specs and is archived as a single file.
 
 ## Install
 
-Copy the four folders inside `skills/` into a skill directory supported by your
-agent, such as `.agents/skills/`, `.github/skills/` for GitHub Copilot, or
-`.claude/skills/` for Claude Code. Keep the folder names unchanged. If your
-agent cannot discover skills, ask it to read and follow the relevant
-`SKILL.md`. The workflow needs file access and the ability to run project checks.
+From the root of the project that will use u-spec, install the latest release
+into `.agents/skills/`.
+
+macOS or Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/alexmengoli/u-spec/main/scripts/install.sh | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/alexmengoli/u-spec/main/scripts/install.ps1 | iex
+```
+
+The installers replace only the `propose`, `change`, `apply`, and `archive`
+folders under `.agents/skills/`. Run the same command later to update them to
+the latest release. Review the [shell installer](scripts/install.sh) or
+[PowerShell installer](scripts/install.ps1) before piping it to a shell.
+
+To install manually, copy the four folders inside `skills/` into a skill
+directory supported by your agent, such as `.agents/skills/`,
+`.github/skills/` for GitHub Copilot, or `.claude/skills/` for Claude Code.
+Keep the folder names unchanged. If your agent cannot discover skills, ask it
+to read and follow the relevant `SKILL.md`. The workflow needs file access and
+the ability to run project checks.
 
 For an existing v1 project, use [migrate-u-spec-v2](migration/skills/migrate-u-spec-v2/SKILL.md).
 Provide the v2 `skills/` folder from a checkout or release bundle and point the
