@@ -1,98 +1,79 @@
 ---
 name: apply
-description: "Use when asked to apply, implement, or resume a u-spec change. Execute the approved tasks from one specification, verify behavior, and update progress in the same file."
+description: "Use when asked to implement or resume a u-spec change. Validate the approved delta, implement its tasks and record current verification evidence."
 ---
 
 # Apply
 
-Framework version: v1.2.0
+Framework version: v2.0.0
 
-Implement one approved change. Use the user's language.
-Write all workflow Markdown files in English, including saved questions and
-evidence. Preserve exact identifiers, paths, commands, UI literals and quotations.
+Resolve the consuming project root and respect its instructions. Keep workflow
+artifacts as direct Markdown files in `u-spec/{changes,specs,archive}/` plus the
+provenance README. Use the user's language in chat and English in workflow files,
+preserving exact identifiers, commands and product literals.
 
-## Boundaries
+## Format and provenance
 
-- Resolve the target project root; ask if ambiguous. Workflow artifacts belong
-  only in `<project-root>/u-spec/{changes,specs,archive}/`, as direct `.md` files
-   without subdirectories or auxiliary artifacts, plus the provenance
-   `<project-root>/u-spec/README.md` below. Code and tests belong in the
-  project's normal locations; project-required build/test outputs are not specs.
-- Respect repository instructions and existing user edits. No unrelated cleanup,
-  automatic commits, extra workflow documents or automatic archiving.
-- Read the chosen change, baseline, applicable specs as below and needed code/checks.
+Active changes and new archives carry `Format: 2`. An unmarked v1 active
+change uses full snapshots. Direct the user to `migrate-u-spec-v2` before
+operating on it. Existing consolidated specs remain readable. Create workflow
+directories as needed.
 
-## Framework Provenance
-
-At every invocation, after resolving the target project root and before the
-procedure, synchronize `<project-root>/u-spec/README.md`. Create its parent if
-needed, never write relative to the installed skill directory. If absent, create
-this English Markdown, substituting this skill's Framework version:
+After confirming the project is new or uses v2, synchronize `u-spec/README.md`
+to this managed block using this skill's declared version:
 
 ```markdown
 <!-- u-spec:provenance -->
 # u-spec
 
-Repository: [u-spec](https://github.com/alexmengoli/u-spec)
-Author: Alex Mengoli
+Repository: [u-spec](https://github.com/alexmengoli/u-spec)\
+Author: Alex Mengoli\
 Version: <framework-version>
 <!-- /u-spec:provenance -->
 ```
 
-For an existing file, require exactly one ordered pair of these markers containing
-one Repository line, one Version line and at most one Author line. Update only
-these managed lines inside the block. If Author is missing, insert
-`Author: Alex Mengoli` immediately after Repository; otherwise set it to that
-value. Preserve all other content. If already correct, do not rewrite the file.
-If the file is unrecognized or ambiguous, ask before changing it; never overwrite
-user content. Use only this skill's declared version, not GitHub, the host project's
-version or another skill. It records the last-used skill version, even if older
-than the previous value. Verify the saved link, author and version. This metadata update
-does not bypass any workflow prerequisite or authorize application changes.
+The Repository and Author lines each end in one literal backslash immediately
+before the newline (Markdown hard breaks). Create the README if absent. In an
+existing README, require one ordered marker pair with one Repository and Version
+line and at most one Author line. Update only managed lines, inserting a missing
+Author after Repository. Preserve other content and existing newline style.
+Ask about ambiguous content. Verify the saved block and skip identical writes.
+A recorded v1 version requires migration before normal v2 operations.
 
 ## Procedure
 
-1. Select `changes/<id>.md` using an explicit ID or the single unambiguous candidate;
-   otherwise ask, listing filenames. If absent, ask for a proposal via `propose`.
-2. Read the full change: `Scope`, `Status`, `Base`, `Goal`, `Requirements`, `Approach`,
-   `Tasks`, `Verification`, optional `Questions`. `Base: new` requires no existing
-   `specs/<id>.md`; otherwise compute its exact-byte SHA-256 and compare with Base.
-   If missing/mismatched, stop for reconciliation via `change`; do not reset Base.
-   Require `Scope: global` (project-wide rules) or `Scope: area:<id>` (one area,
-   e.g. `area:login`), with stable English lowercase kebab-case area IDs. Clarify
-   missing/ambiguous Scope via `change`. Scan current spec titles/Scope. Always
-   reread every global spec, regardless of the request's area. Read area-specific
-   spec bodies only when their Scope matches an area actually involved in the
-   approved request; read every spec for those areas. A global request does not
-   automatically involve every area: with no specific area involved, read only
-   global specs. Determine involved areas from the request and nearby code; ask
-   if unclear rather than loading other areas speculatively. Preserve Scope
-   immediately below the title. Conflicts require `change` and approval, not
-   silent overrides.
-3. Block on unresolved questions, conflicting requirements, missing acceptance
-   checks or an ambiguous scope. Ask focused questions; use `change` to record
-   material revisions and obtain approval before implementation. Never invent
-   requirements. Explicit user invocation of apply approves the current complete
-   draft; otherwise require recorded approval (`ready`, `applying` or `done`).
-4. Find the next unchecked task and inspect its owning code and nearest test.
-   Confirm any previously checked tasks still match the working tree when
-   resuming; reopen stale tasks/evidence. Set `Status: applying` before editing.
-5. Implement the smallest scoped task using project conventions. Run the cheapest
-   behavior-focused check immediately after the first substantive code edit,
-   before expanding scope. Fix local failures and rerun. Mark a task `[x]` only
-   after its work and relevant checks succeed; update the same Markdown file.
-6. Repeat for remaining tasks. Record concise verification evidence against every
-   requirement: command or manual steps, actual outcome and relevant limitation.
-   Do not paste full logs. Use project-required validation gates as well as focused
-   checks; record unrelated existing failures honestly, never fix them by default.
-7. If blocked, record the blocker in `Verification`, keep unfinished tasks unchecked
-   and status `applying`, report what needs resolution, and stop. Unavailable,
-   failed or skipped required checks are not passes. Do not silently weaken checks.
-8. Set `Status: done` only when all tasks are checked and every acceptance check
-   and required gate has passed with evidence. Otherwise leave `applying` and
-   report remaining work. Summarize changes and verification; offer `archive` next,
-   but do not update specs or move the file automatically.
+1. Select `changes/<change-id>.md` by explicit ID or an unambiguous single
+   candidate. Read its Goal, optional Approach, Tasks, Verification, and any
+   Questions. Check each `## Targets` entry against the exact-byte SHA-256
+   of its current spec or the absence declared by `new`.
+2. Validate the delta before implementation. Each edited target has a unique
+   `### <spec-id>` block in `## Spec changes`. Each `#### ADDED Rn` uses an
+   unused ID, `#### MODIFIED Rn` replaces an existing requirement, and
+   `#### REMOVED Rn` names an existing ID with no body. A new target has
+   `#### METADATA` with Title, Scope and Goal and at least one addition.
+   Existing targets may explicitly replace those metadata fields together or
+   serve as baseline guards without operations. A guard-only change has
+   Targets without Spec changes. A change with no spec targets omits both
+   sections. Preserve unaffected requirements. Never edit specs during apply.
+3. Scan spec metadata. Read all global specs and all area specs for areas
+   actually involved, plus targets. Inspect relevant code and tests. Baseline
+   drift, invalid deltas, open product questions, conflicting requirements and
+   missing acceptance checks require resolution via `change`. Explicitly
+   invoking apply approves a complete draft. Otherwise require `ready`,
+   `applying` or `done`. An interrupted archive belongs to `archive`.
+4. Verify previously checked tasks against the working tree; reopen stale
+   tasks and evidence. Set `Status: applying` before substantive edits.
+   Implement the approved tasks using project conventions. Run the cheapest
+   relevant behavior check after the first substantive edit. Check each task
+   only after its work and relevant checks pass.
+5. Record concise outcomes in `## Verification`, using qualified references
+   such as `recipe-library/R4`. Cover additions, replacements, removals and
+   meaningful metadata changes plus relevant regressions and required project
+   gates. For a blocker, record the limitation and leave the change in
+   `applying` with affected tasks unchecked. Material scope changes go through
+   `change` and renewed approval.
+6. Set `Status: done` only after all tasks and checks pass with current evidence.
+   Report the result. Archival requires a separate request.
 
-Keep requirement/task IDs stable. Update progress and evidence in place rather
-than appending a session diary. New product decisions require `change` and fresh
-approval; ordinary implementation details within the approved approach do not.
+Update the active change in place. Keep application edits scoped to approved
+work and follow the project's normal check and build conventions.

@@ -4,192 +4,152 @@
 
 # u-spec
 
-Four skills for lightweight spec-driven development, inspired by
-[OpenSpec](https://github.com/Fission-AI/OpenSpec/), with no CLI or dependencies.
-One change = one Markdown file containing goal, requirements, approach, tasks and checks.
+Four Markdown skills for lightweight spec-driven development. One change
+documents the goal, requirement deltas, tasks and verification for one piece of
+work. A change can update several specs and is archived as a single file.
 
-## Installation
+## Install
 
-This repository distributes skills; it is not a project's working `u-spec`
-directory. Copy the four folders inside `skills/` into a skill directory supported
-by your harness, such as `.agents/skills/`, `.github/skills/` for GitHub Copilot or
-`.claude/skills/` for Claude Code. Keep the folder names unchanged. No other files
-from this repository are required at runtime.
+Copy the four folders inside `skills/` into a skill directory supported by your
+agent, such as `.agents/skills/`, `.github/skills/` for GitHub Copilot, or
+`.claude/skills/` for Claude Code. Keep the folder names unchanged. If your
+agent cannot discover skills, ask it to read and follow the relevant
+`SKILL.md`. The workflow needs file access and the ability to run project checks.
 
-There is no installation directory recognized by every harness: skill discovery
-depends on the bot, not the underlying model. Keep `skills/<name>/SKILL.md` as the
-distribution format in this repository; prefer `.agents/skills/<name>/SKILL.md`
-in consuming projects when supported, otherwise use the harness-specific path.
-For harnesses without native skill discovery, explicitly ask the bot to read and
-follow the selected `SKILL.md`. Each skill is self-contained and needs no CLI.
-Installed skills and the project's `u-spec/` workflow artifacts remain separate.
-
-The bot needs file access, the ability to ask questions and to run project checks.
-Invocation syntax depends on the harness; skill names are `propose`, `change`,
-`apply`, `archive`.
+For an existing v1 project, use [migrate-u-spec-v2](migration/skills/migrate-u-spec-v2/SKILL.md).
+Provide the v2 `skills/` folder from a checkout or release bundle and point the
+migration skill at the consuming project. The skill checks the original bases,
+converts active full-spec changes to deltas, installs the four v2 skills and
+updates the provenance README. Consolidated specs and old archives remain
+readable as they are. Releases distribute the migration skill separately in
+`migration-v<version>.zip`.
 
 ## Workflow
 
 | Skill | Outcome |
 | --- | --- |
-| [propose](skills/propose/SKILL.md) | Reads applicable specs, investigates locally, asks until material doubts are resolved and prepares one file. No implementation. |
-| [change](skills/change/SKILL.md) | Revises that file, including during implementation; requires fresh approval. No code changes. |
-| [apply](skills/apply/SKILL.md) | Implements approved tasks, runs checks and records progress and evidence in the same file. |
-| [archive](skills/archive/SKILL.md) | Consolidates current requirements into specs and preserves the complete change in archive. No implementation. |
+| [propose](skills/propose/SKILL.md) | Investigate the request, clarify consequential choices, and prepare a delta for approval. |
+| [change](skills/change/SKILL.md) | Revise the active change, reconcile baseline drift and refresh approval for material revisions. |
+| [apply](skills/apply/SKILL.md) | Implement the approved tasks and record passing checks. |
+| [archive](skills/archive/SKILL.md) | Apply the delta to its target specs and save one change with verification evidence. |
 
-Example: `propose add product search`, answer questions, approve,
-`apply product-search`, optionally `change product-search`, then
-`archive product-search`. An explicit `apply` request approves the current
-document if no questions remain unresolved.
+In a recipe app, `propose add-recipe-collections` can update the recipe library
+and add a spec for user-created collections. After approval,
+`apply add-recipe-collections` implements and verifies both parts.
+`archive add-recipe-collections` updates both specs and saves one record.
+An explicit `apply` request can approve the current proposal once its questions
+are resolved.
 
-### Example: A Login Component
-
-Request: "Use propose to create a Login component."
-
-1. The bot reads project instructions, scans current spec titles and scopes, then
-  reads every global spec and every `area:login` spec, plus the matching baseline
-  if one exists. It inspects only nearby code and checks needed for the request.
-2. It asks about unresolved responsibilities, states, validation, interactions,
-  accessibility and exclusions. It investigates facts available in code rather
-  than asking you to repeat them. Questions continue until material doubts are
-  resolved; no component is implemented yet.
-3. It writes one English document at `u-spec/changes/login-component.md` with
-  `Scope: area:login`, goal, full requirements, approach, tasks and verification
-  checks. If the capability already has a spec, it reuses that ID instead.
-4. It requests approval. Use `change login-component` to revise the proposal;
-  revisions require fresh approval. Unresolved questions keep it in `draft`.
-5. Request `apply login-component` to implement the approved component in the
-  project's normal directories. The bot runs checks and records task progress
-  and concise evidence in the same change file. Scope revisions during this
-  work go through `change`; failed or unavailable checks prevent completion.
-6. Request `archive login-component` once the work is complete and verified. The
-  bot consolidates current behavior into `u-spec/specs/login-component.md`, saves
-  the full change in `u-spec/archive/<date>-login-component.md`, then removes the
-  active change only after verifying both saved files. Archival is not automatic.
-
-## Project Layout
+## Files and format
 
 ```text
-<project-root>/u-spec/
+u-spec/
   README.md
   changes/
-    product-search.md
+    add-recipe-collections.md
   specs/
-    product-search.md
+    recipe-library.md
+    recipe-collections.md
   archive/
-    2026-10-27-product-search.md
+    2026-11-26-add-recipe-collections.md
 ```
 
-These three directories contain only direct `.md` files, without subdirectories
-or auxiliary files. Skills create the directories on first use. All workflow
-artifacts stay here; code and tests remain in the project's normal locations.
-No separate proposal, design, task, log or configuration documents are created.
+The three directories hold flat Markdown files. A **change ID** names one
+piece of work. A **spec ID** names a durable capability and stays stable
+across changes. Consolidated specs contain the current title, Scope, Goal,
+and Requirements. A spec's scope is `global` or `area:<id>` with a lowercase
+kebab-case area ID. Propose, change and apply read global rules and specs for
+the affected areas. Archive reads only the named targets.
 
-The root `u-spec/README.md` is the only additional workflow file. On every skill
-invocation, after resolving the project root, the bot creates or synchronizes a
-marked provenance block containing the [public repository](https://github.com/alexmengoli/u-spec)
-link, author Alex Mengoli and the invoked skill's declared framework version.
-This also applies to existing projects without the file; older managed blocks
-without an Author line gain `Author: Alex Mengoli` on the next invocation.
-The version identifies the last-used skill, not the
-project's initial version or the latest online release; using an older installed
-skill can lower it. No network request is needed. Text outside the managed fields
-is preserved, unchanged files are not rewritten, and unrecognized or ambiguous
-files require clarification before modification. This metadata write never
-bypasses proposal, approval or verification prerequisites.
-
-The ID identifies a spec and stays stable across revisions: a subsequent search
-change reuses `product-search` rather than creating a nearly identical spec.
-One proposal concerns one spec; split independent capabilities only with user agreement.
-
-- `changes/<id>.md`: one active change per spec, describing the complete intended
-  behavior rather than only a delta from the previous version.
-- `specs/<id>.md`: consolidated current behavior, without tasks or history.
-- `archive/<date>-<id>.md`: one full copy per completed revision; use numeric
-  suffixes on filename collisions, never overwrite history.
-
-Change states: `draft` (needs clarification/approval), `ready` (approved),
-`applying` (in progress), `done` (complete and verified). Archives use `archived`.
-`Base` records `new` or the original spec file's SHA-256: if that baseline changes,
-the bot stops for reconciliation before continuing.
-
-## Scope And Language
-
-Every change, consolidated spec and archive must carry one `Scope` attribute
-immediately below its title:
+A v2 change declares `Format: 2` and a status of `draft` (awaiting answers or
+approval), `ready`, `applying` or `done`. Archives use `archived`. The active
+proposal is the document edited throughout the workflow.
 
 ```markdown
-# typography: Project typography
-Scope: global
+# add-recipe-collections: Add recipe collections
+Format: 2
+Status: ready
+
+## Goal
+Let people organize recipes into named collections.
+
+## Targets
+- recipe-library: <exact-byte SHA-256 of specs/recipe-library.md>
+- recipe-collections: new
+
+## Spec changes
+
+### recipe-library
+
+#### MODIFIED R4
+The recipe library links to the collections page.
+
+#### REMOVED R9
+
+### recipe-collections
+
+#### METADATA
+Title: Recipe collections
+Scope: area:recipes
+Goal: Let users organize saved recipes.
+
+#### ADDED R1
+Users can create a named collection. A new collection starts empty.
+
+## Tasks
+- [ ] T1: Link to collections and remove automatic cuisine groups (recipe-library/R4, recipe-library/R9).
+- [ ] T2: Add the named collection form (recipe-collections/R1).
+
+## Verification
+- recipe-library/R4, recipe-library/R9: The library links to collections and shows no automatic cuisine groups. | not run
+- recipe-collections/R1: Creating `Weeknight dinners` shows that name and an empty recipe list. | not run
 ```
 
-```markdown
-# login-page: Login page UX/UI
-Scope: area:login
-```
+An operation contains the complete text of its affected requirement. Unchanged
+requirements stay in their specs. `REMOVED` has no body. Reference requirement IDs
+as `<spec-id>/<requirement-id>`. A new spec needs metadata and one or more
+additions. A change can replace existing title, Scope and Goal together with
+an explicit metadata block. Use `Approach` when useful and `Questions` for open
+decisions. Implementation-only changes can omit both delta sections. An existing
+target may appear without operations when its baseline must still be checked.
 
-- `global`: project-wide rules, such as fonts, theme, shared animations or constants.
-- `area:<id>`: behavior specific to one area, such as the Login page's UX/UI.
-  Area IDs are stable English lowercase kebab-case names, reused across specs.
+Keep requirements focused on observable behavior. Put implementation choices
+in Approach, test results in Verification, and refer to existing specs or
+contracts for shared rules. Add acceptance examples where they clarify a
+boundary or an ambiguous behavior. Repository documentation and workflow
+files are in English. Conversations can use the user's language.
 
-Before drafting a proposal, the bot scans the titles and Scope metadata of current
-specs. Always reread every global spec, regardless of the request's area. Read
-area-specific spec bodies only when their Scope matches an area actually involved
-in the request; read all specs for those areas, plus the matching baseline if any.
-A global request does not automatically make every area relevant: if no specific
-area is involved, read only global specs. Determine involved areas from the request
-and nearby code; ask if unclear rather than loading other areas speculatively.
-Missing or ambiguous Scope must be clarified, not treated as irrelevant. Conflicts
-require an explicit user decision, not silent overrides. The same selection rule
-applies during revision and implementation. During archival, follow the narrower
-global-spec relevance rule in `skills/archive/SKILL.md`; unrelated spec bodies and
-archives stay unloaded.
+Archive validates every base before writing, then saves the delta with its
+result hashes and applies the exact operations by ID. If interrupted between
+spec writes, retry the same archive request. The skill uses the saved hashes
+to identify completed writes and stops on unexpected edits. The active file
+is removed only after the archive and all results are verified.
 
-For example, a Login request must read global typography/theme rules and all
-`area:login` specs, but not `area:checkout` specs unless checkout is also actually
-involved in that request. Scanning metadata to select specs is not permission to
-load every spec body.
+The generated `u-spec/README.md` records the repository, author and last-used
+framework version on separate rendered lines. The skills update only these
+managed fields and preserve unrelated text.
 
-All repository documentation and workflow Markdown files must be written in
-English, including questions saved in drafts, tasks and verification evidence.
-Conversation may use the user's language. Preserve exact code identifiers,
-paths, commands, literal UI strings and quoted evidence when translation would
-change their meaning; this rule does not require the product UI to be in English.
+## Compared with OpenSpec
 
-## Context Budget
-
-Each skill is self-contained: load only the requested one. Scan spec metadata
-without loading unrelated bodies; read applicable specs and only necessary code.
-Do not load the entire archive. Concise requirements, actionable tasks and short
-verification evidence replace narration, chat diaries and duplicate documents.
-
-There is no question-count limit: ask a few focused questions per turn without
-repeating answered questions. Compactness never authorizes invented requirements.
-These are agent instructions, not programmatically enforced constraints; their
-effectiveness depends on the executing bot's capabilities.
+[OpenSpec](https://github.com/Fission-AI/OpenSpec) installs a CLI and organizes
+the default change as a folder with separate proposal, design, specs and tasks.
+u-spec keeps requirement deltas, tasks and evidence in one Markdown file per
+change and runs through four skills without a CLI, configurable schemas or
+workflow profiles. That makes u-spec a better fit for a project that wants
+fewer files to review and a smaller setup while keeping readable change
+history. OpenSpec offers CLI validation and customization. With u-spec, the
+agent follows the format and runs the project's checks.
 
 ## Releasing
 
-Use PowerShell to update all four skill versions before tagging a release:
+Update all four workflow skill versions with PowerShell before tagging:
 
 ```powershell
-./scripts/bump-version.ps1 -Version 1.2.0 -WhatIf
-./scripts/bump-version.ps1 -Version 1.2.0
+./scripts/bump-version.ps1 -Version 2.1.0 -WhatIf
+./scripts/bump-version.ps1 -Version 2.1.0
 ```
 
-The optional `v` prefix is accepted; declarations are always saved as `vMAJOR.MINOR.PATCH`.
-Only stable versions are supported, and the new version must be greater than the
-current version. The script resolves paths from its own location, validates all
-four declarations before writing, and preserves encoding and line endings in the
-UTF-8 skill files. Missing, invalid, duplicate or inconsistent declarations stop
-the operation without updates. `-WhatIf` previews the operation without writing.
-The script does not change the changelog, create commits or tags, or publish a
-release; complete those steps separately.
-
-The single `Framework version: ...` line in each of the four
-`skills/<name>/SKILL.md` files must match the exact intended tag, including the
-`v` prefix. Keep all four values identical and update the changelog. The release
-workflow checks these declarations against the tag before packaging the skills;
-missing, duplicate or mismatched declarations block publication. Each installed
-skill carries its own version and provenance instructions without runtime access
-to this repository's changelog or release workflow.
+The script requires four matching version declarations and a higher stable
+version. It preserves encoding and line endings. Update the changelog
+separately. The release workflow checks the declarations against the tag and
+packages the workflow skills and the migration skill as separate ZIP files.

@@ -1,99 +1,122 @@
 ---
 name: archive
-description: "Use when asked to archive or finalize a completed u-spec change. Consolidate current requirements into one spec and preserve the complete change as one flat Markdown archive."
+description: "Use when asked to archive a verified u-spec change. Apply requirement deltas to the named specs and save one change record."
 ---
 
 # Archive
 
-Framework version: v1.2.0
+Framework version: v2.0.0
 
-Consolidate verified behavior and preserve its implementation record. Respond in
-the user's language. Do not implement, fix code or auto-commit.
-Write all workflow Markdown files in English, including saved questions and
-evidence. Preserve exact identifiers, paths, commands, UI literals and quotations.
+Resolve the consuming project root and respect its instructions. Keep workflow
+artifacts as direct Markdown files in `u-spec/{changes,specs,archive}/` plus the
+provenance README. Use the user's language in chat and English in workflow files,
+preserving exact identifiers, commands and product literals.
 
-## Boundaries
+## Format and provenance
 
-- Resolve the target project root; ask if ambiguous. All writes stay inside
-   `<project-root>/u-spec/{changes,specs,archive}/`, except the provenance
-   `<project-root>/u-spec/README.md` below. Each directory contains only
-  direct `.md` files; no subdirectories, temporary files or extra artifacts.
-- Read only the selected change, matching baseline and necessary verification
-  evidence. Preserve unrelated files and never overwrite an existing archive.
+Active changes and new archives carry `Format: 2`. An unmarked v1 active
+change uses full snapshots. Direct the user to `migrate-u-spec-v2` before
+operating on it. Existing consolidated specs remain readable. Create workflow
+directories as needed.
 
-## Framework Provenance
-
-At every invocation, after resolving the target project root and before the
-procedure, synchronize `<project-root>/u-spec/README.md`. Create its parent if
-needed, never write relative to the installed skill directory. If absent, create
-this English Markdown, substituting this skill's Framework version:
+After confirming the project is new or uses v2, synchronize `u-spec/README.md`
+to this managed block using this skill's declared version:
 
 ```markdown
 <!-- u-spec:provenance -->
 # u-spec
 
-Repository: [u-spec](https://github.com/alexmengoli/u-spec)
-Author: Alex Mengoli
+Repository: [u-spec](https://github.com/alexmengoli/u-spec)\
+Author: Alex Mengoli\
 Version: <framework-version>
 <!-- /u-spec:provenance -->
 ```
 
-For an existing file, require exactly one ordered pair of these markers containing
-one Repository line, one Version line and at most one Author line. Update only
-these managed lines inside the block. If Author is missing, insert
-`Author: Alex Mengoli` immediately after Repository; otherwise set it to that
-value. Preserve all other content. If already correct, do not rewrite the file.
-If the file is unrecognized or ambiguous, ask before changing it; never overwrite
-user content. Use only this skill's declared version, not GitHub, the host project's
-version or another skill. It records the last-used skill version, even if older
-than the previous value. Verify the saved link, author and version. This metadata update
-does not bypass any workflow prerequisite or authorize application changes.
+The Repository and Author lines each end in one literal backslash immediately
+before the newline (Markdown hard breaks). Create the README if absent. In an
+existing README, require one ordered marker pair with one Repository and Version
+line and at most one Author line. Update only managed lines, inserting a missing
+Author after Repository. Preserve other content and existing newline style.
+Ask about ambiguous content. Verify the saved block and skip identical writes.
+A recorded v1 version requires migration before normal v2 operations.
 
-## Procedure
+## Preflight
 
-1. Select `changes/<id>.md` by explicit ID or single unambiguous candidate; otherwise
-   ask, listing filenames. Never infer completion from an archive filename alone.
-2. Read the entire change. Require `Status: done`, every task `[x]`, no unresolved
-   questions, and passing evidence for every requirement and required project
-   gate. Missing, skipped, failed or unavailable checks block archival. Reuse
-   complete, current passing evidence; if code has changed since verification,
-   rerun only the affected checks before proceeding.
-   Report gaps and return to `apply`; never invent evidence or force completion.
-   Require `Scope: global` (project-wide rules) or `Scope: area:<id>` (one area,
-   e.g. `area:login`), with stable English lowercase kebab-case area IDs. Clarify
-   missing/ambiguous Scope via `change`. Scan current spec titles/Scope. For an
-   area-scoped change, read every spec for the involved areas and only global
-   specs whose titles or Goals indicate relevance to the change or target spec;
-   read a global spec if relevance is unclear. For a global-scoped change, read
-   every global spec. A global request does not automatically involve every area:
-   read area-specific specs only for areas actually involved. Determine involved
-   areas from the request and nearby code; ask if unclear rather than loading
-   other areas speculatively. Unresolved conflicts block archival and require
-   `change`, renewed approval and verification.
-3. Check `Base`: `new` means `specs/<id>.md` must not exist; otherwise its exact-byte
-   SHA-256 must match. A conflict requires reconciliation via `change`, renewed
-   approval and verification. Do not discard other changes or reset Base silently.
-4. Prepare the consolidated `specs/<id>.md` with only the existing title, `Scope`
-   immediately below it, `Goal` and complete `Requirements`, keeping requirement
-   IDs and acceptance examples. Preserve the approved Scope in the archive too.
-   It describes current behavior, not a delta. Preserve unchanged requirements;
-   remove only explicitly superseded ones. Do not include status, Base, tasks,
-   implementation narrative or verification history in the consolidated spec.
-5. Choose `archive/YYYY-MM-DD-<id>.md` using the current date; on collision append
-   `-2`, `-3`, etc. Write the full change there with `Status: archived`, leaving
-   its original Base, tasks and evidence intact. Verify the archive content was
-   saved successfully before updating the consolidated spec.
-6. Write the prepared consolidated spec and verify its saved content matches the
-   intended result. Only after both destination files are verified, remove
-   `changes/<id>.md`. Never delete the active file first. Report both final paths.
+1. Select `changes/<change-id>.md` by explicit ID or an unambiguous single
+   candidate. Require `Status: done`, checked tasks, no questions, and passing
+   evidence for the delta, regression checks and required project gates. Reuse
+   current evidence. If affected code changed since verification, rerun the
+   affected checks or return to `apply` if evidence is missing or fails.
+2. Read the selected change and only its target specs. Look for an interrupted
+   archive as described below before rejecting a hash mismatch. For a fresh
+   archive, every `## Targets` entry must match the spec's exact-byte SHA-256,
+   or absence for `new`. Stop on drift and use `change` to reconcile. Do not
+   scan sibling specs or semantically merge requirements.
+3. Validate all target IDs and operations before any target or archive write.
+   Require unique lowercase kebab-case target IDs, each with one base. Each
+   `## Spec changes` block `### <spec-id>` must name a unique declared target,
+   with unique requirement IDs. Reject unknown operations and empty bodies
+   for additions or replacements. For each `#### ADDED Rn` append the new
+   `- Rn:` requirement. For each `#### MODIFIED Rn` replace only that
+   requirement in place. For each `#### REMOVED Rn` delete exactly that
+   requirement; the operation must have no body. An add must name an unused
+   ID, and a modification or removal must identify exactly one existing
+   requirement. Treat continuation lines as part of the same requirement and
+   preserve Markdown structure when converting delta content to a list item.
+   Use an explicit `#### METADATA` block (Title, Scope, Goal) for metadata
+   changes. Scope must be `global` or `area:<kebab-case>`. A new spec
+   requires this block and at least one addition. Write
+   `# <spec-id>: <Title>`, `Scope:`, `## Goal` and `## Requirements`.
+   Existing targets without operations retain their exact bytes. A guard-only
+   change has Targets without Spec changes. Reject ambiguous structures.
+   A change with no spec targets has neither section.
 
-## Interrupted Archive
+## Serialize spec results
 
-Writes across files are not atomic. If an earlier attempt left an active change
-plus an archive, compare complete content (allowing only done/archived status)
-and the intended consolidated spec before any write. Resume only if the matching
-archive is identifiable and the baseline still matches Base, or the spec already
-exactly equals the intended result. Reuse that verified archive, finish/verify
-the spec, then remove the active file last. Otherwise stop and ask to reconcile;
-never treat an arbitrary Base mismatch as successful archival, overwrite history,
-or create another archive blindly.
+- Identify operations and requirement boundaries outside fenced code. Remove
+  blank lines at the edges of an operation body. Render the first body line
+  as the text after the requirement ID. Prefix each remaining nonblank line
+  with two spaces, keeping its original indentation and text. Retain interior
+  blank lines and do not rewrap. Treat blank lines between existing items as
+  separators, not part of the preceding body.
+- For existing specs, preserve the original encoding, untouched lines and
+  their line endings. Use the file's first line-ending style for generated
+  lines. Replace an item's lines in place, leaving intervening separators
+  untouched. Remove the item and one adjacent separator if present, preferring
+  the following separator. Append additions in delta order with one blank
+  line between additions and between the first addition and the last existing
+  item, stripping trailing blank lines at that boundary. Keep metadata field
+  order and render an explicit new goal by removing its field indentation.
+- For new specs, use UTF-8 without BOM and LF. Write the title and Scope on
+  successive lines, then a blank line, the Goal heading, the goal body, a
+  blank line, the Requirements heading, and the requirement items, with one
+  blank line between items and one terminal LF.
+
+## Save
+
+1. Prepare all resulting bytes and compute their SHA-256 hashes. Create a
+   single `archive/YYYY-MM-DD-<change-id>.md` using the current date, or the
+   next available numeric suffix (`-2`, `-3`, …). Save the complete **delta
+   change**, switching `Status: done` to `archived` and appending
+   `## Archive results` with one `- <spec-id>: <result SHA-256>` for each
+   target (or `No spec targets.`). Verify the archive before writing specs.
+2. Before writing each spec, recheck its base. Use atomic file replacement
+   when available, then verify the saved hash. Skip writing unchanged bytes.
+   Before removing the active change, verify the archive, every result hash
+   and that the active
+   change still matches the archived source. Delete the active change last.
+   Report the archive and any changed specs. Leave code and Git history alone.
+
+## Resume an interrupted archive
+
+Search only archive filenames that could belong to the selected change ID.
+A reusable Format 2 archive has the same change body except for Status and
+the appended results block, and must record exactly the declared targets.
+Use only a unique verified match. If the same change body has conflicting or
+invalid records, stop for reconciliation. Classify each target's current bytes against
+the result hash and its original base. A target already at its recorded result
+needs no write. For every remaining target, require the original base
+(including absence for `new`), regenerate its result, and verify it against the
+recorded hash before any writes. Stop if any target is in a third state.
+Complete the pending writes and use the same final verification and removal
+steps. Preserve the original archive path and contents.

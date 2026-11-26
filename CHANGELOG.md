@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.0] - 2026-11-26
+
+### Changed
+
+- Active changes use Format 2. One change can target multiple specs with
+  independent SHA-256 bases and explicit ADDED, MODIFIED and REMOVED operations.
+- Proposals and archives store the changed requirements. Consolidated specs
+  describe current behavior in the existing spec format.
+- Archive now reads only its target specs and saves one delta record with
+  result hashes so interrupted writes can be resumed.
+
+### Added
+
+- The separately packaged `migrate-u-spec-v2` skill converts active v1 changes
+  and installs the four v2 workflow skills while preserving specs and history.
+
+### Fixed
+
+- Repository, author and version render on separate lines in the generated
+  provenance README.
+
 ## [v1.2.0] - 2026-10-29
 
 ### Added

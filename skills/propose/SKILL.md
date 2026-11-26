@@ -1,115 +1,121 @@
 ---
 name: propose
-description: "Use when asked to propose or plan a u-spec feature, fix, or small project change. Ask persistent clarifying questions and create one compact specification; do not implement."
+description: "Use when asked to propose a u-spec change. Define the smallest verified delta across one or more specs and get approval before implementation."
 ---
 
 # Propose
 
-Framework version: v1.2.0
+Framework version: v2.0.0
 
-Create a small, unambiguous change specification. Respond in the user's language.
-Write all workflow Markdown files in English, including saved questions and
-evidence. Preserve exact identifiers, paths, commands, UI literals and quotations.
+Resolve the consuming project root and respect its instructions. Keep workflow
+artifacts as direct Markdown files in `u-spec/{changes,specs,archive}/` plus the
+provenance README. Use the user's language in chat and English in workflow files,
+preserving exact identifiers, commands and product literals.
 
-## Boundaries
+## Format and provenance
 
-- Resolve the target project root; ask if ambiguous. Store every workflow artifact
-  under `<project-root>/u-spec/`, never relative to the installed skill directory.
-- Ensure `changes/`, `specs/`, `archive/` exist there. Each contains only direct
-   `.md` files, no subdirectories. The provenance README below is the only extra
-   workflow file allowed; do not create other workflow files or folders.
-- Scan current spec titles and Scope metadata; load applicable bodies as below,
-   not unrelated specs, archives or other skills. No CLI dependency is required.
-- Do not modify application code, tests, dependencies or project configuration.
+Active changes and new archives carry `Format: 2`. An unmarked v1 active
+change uses full snapshots. Direct the user to `migrate-u-spec-v2` before
+operating on it. Existing consolidated specs remain readable. Create workflow
+directories as needed.
 
-## Framework Provenance
-
-At every invocation, after resolving the target project root and before the
-procedure, synchronize `<project-root>/u-spec/README.md`. Create its parent if
-needed, never write relative to the installed skill directory. If absent, create
-this English Markdown, substituting this skill's Framework version:
+After confirming the project is new or uses v2, synchronize `u-spec/README.md`
+to this managed block using this skill's declared version:
 
 ```markdown
 <!-- u-spec:provenance -->
 # u-spec
 
-Repository: [u-spec](https://github.com/alexmengoli/u-spec)
-Author: Alex Mengoli
+Repository: [u-spec](https://github.com/alexmengoli/u-spec)\
+Author: Alex Mengoli\
 Version: <framework-version>
 <!-- /u-spec:provenance -->
 ```
 
-For an existing file, require exactly one ordered pair of these markers containing
-one Repository line, one Version line and at most one Author line. Update only
-these managed lines inside the block. If Author is missing, insert
-`Author: Alex Mengoli` immediately after Repository; otherwise set it to that
-value. Preserve all other content. If already correct, do not rewrite the file.
-If the file is unrecognized or ambiguous, ask before changing it; never overwrite
-user content. Use only this skill's declared version, not GitHub, the host project's
-version or another skill. It records the last-used skill version, even if older
-than the previous value. Verify the saved link, author and version. This metadata update
-does not bypass any workflow prerequisite or authorize application changes.
+The Repository and Author lines each end in one literal backslash immediately
+before the newline (Markdown hard breaks). Create the README if absent. In an
+existing README, require one ordered marker pair with one Repository and Version
+line and at most one Author line. Update only managed lines, inserting a missing
+Author after Repository. Preserve other content and existing newline style.
+Ask about ambiguous content. Verify the saved block and skip identical writes.
+A recorded v1 version requires migration before normal v2 operations.
 
 ## Procedure
 
-1. Establish the goal and choose one stable lowercase kebab-case spec ID. Reuse an
-   existing ID when changing the same capability. Use filenames to find candidates;
-   ask on ambiguity. If `changes/<id>.md` exists, offer to resume it with `change`;
-   never overwrite it. Agree on splitting unrelated capabilities before doing so.
-2. Set `Scope: global` for project-wide rules (fonts, theme, shared animations,
-   constants), or `Scope: area:<id>` for one area's behavior (e.g. `area:login`
-   for Login UX/UI). Reuse stable English lowercase kebab-case area IDs; ask if
-   uncertain. Scan titles and Scope metadata in `specs/*.md`. Always reread every
-   global spec, regardless of the request's area. Read area-specific spec bodies
-   only when their Scope matches an area actually involved in the request; read
-   every spec for those areas and `specs/<id>.md` if present. A global request does
-   not automatically involve every area: with no specific area involved, read
-   only global specs. Determine involved areas from the request and nearby code;
-   ask if unclear rather than loading other areas speculatively. Clarify
-   missing/ambiguous Scope rather than skipping it.
-   Resolve conflicts with the user; never silently override existing rules.
-   Inspect the nearest owning code/checks and form an evidence-based approach.
-3. Keep asking until material uncertainty is resolved: expected behavior, scope,
-   exclusions, edge/error cases, compatibility, constraints and acceptance checks.
-   Ask a few focused questions per turn, with concrete choices and consequences
-   when useful. Investigate facts available in code rather than asking the user.
-   Challenge conflicting answers and vague terms. Never silently choose product
-   behavior. There is no question-count limit; do not stop just to save tokens.
-   Skip already answered or irrelevant questions. If questioning is paused, save
-   a `draft` with explicit open questions; never mark it ready or implement it.
-4. Create `changes/<id>.md` using the compact format below. `Base` is `new` when
-   no baseline exists, otherwise the SHA-256 of the exact bytes of `specs/<id>.md`
-   computed with available tools. Do not guess the hash. Preserve all unchanged
-   baseline requirements and their IDs: this is the full intended resulting spec.
-5. Show a short summary and request approval. Stay `draft` until explicit approval
-   of this revision, then set `ready`. A later explicit `apply` request also
-   approves the current revision if it has no open questions. Do not run apply.
+1. Choose a stable lowercase kebab-case change ID for the work. A change may
+   affect multiple existing or new spec IDs. Reuse existing capability IDs.
+   Pick a fresh ID for new work by checking active changes and archive
+   filenames. Never overwrite an active change. Use `change` to revise it.
+2. Scan spec titles and Scope metadata. Read target specs, all global specs,
+   and other area specs only for areas actually involved. Inspect nearby code,
+   tests and authoritative contracts. Resolve conflicts and consequential
+   product questions with the user. If questions remain, save them in the
+   proposal. Do not implement code, edit specs or create a separate design file.
+3. Write `u-spec/changes/<change-id>.md` using the format below. Base hashes
+   cover the exact bytes of each targeted spec (SHA-256); use `new` only for an
+   absent spec. Additions and replacements contain the complete text of only
+   the affected requirement. Keep tasks and checks focused on the delta and
+   its real regression risks. Reference authoritative contracts and shared
+   rules rather than restating them. Keep durable behavior in requirements,
+   implementation detail in Approach, and test evidence in Verification.
+4. Summarize intent, affected specs and material changes. Use `Status: draft`
+   until the proposal is approved and has no open questions, then `ready`.
+   An explicit `apply` of the current complete proposal may supply approval.
 
-## Single-File Format
+## Change format
 
 ```markdown
-# <id>: <short title>
-Scope: <global | area:area-id>
+# add-recipe-collections: Add recipe collections
+Format: 2
 Status: draft
-Base: <new | SHA-256 of specs/<id>.md>
 
 ## Goal
-<why and intended outcome; exclusions only when useful>
+Let people organize recipes into named collections.
 
-## Requirements
-- R1: <observable behavior and concrete acceptance example, including errors if relevant>
+## Targets
+- recipe-library: <64-character SHA-256>
+- recipe-collections: new
+
+## Spec changes
+
+### recipe-library
+
+#### MODIFIED R4
+The recipe library links to the collections page.
+
+#### REMOVED R9
+
+### recipe-collections
+
+#### METADATA
+Title: Recipe collections
+Scope: area:recipes
+Goal: Let users organize saved recipes.
+
+#### ADDED R1
+Users can create a named collection. A new collection starts empty.
 
 ## Approach
-<brief decision, affected paths, constraints; omit unnecessary design detail>
+Reuse the recipe library's existing form controls on the collections page.
 
 ## Tasks
-- [ ] T1: <small actionable step and its requirement IDs>
+- [ ] T1: Link to collections and remove automatic cuisine groups (recipe-library/R4, recipe-library/R9).
+- [ ] T2: Add the named collection form (recipe-collections/R1).
 
 ## Verification
-- R1: <specific check/command and expected outcome> | not run
+- recipe-library/R4, recipe-library/R9: The library links to collections and shows no automatic cuisine groups. | not run
+- recipe-collections/R1: Creating `Weeknight dinners` shows that name and an empty recipe list. | not run
 ```
 
-Add `## Questions` only while unresolved questions exist; remove it when resolved.
-Keep requirement/task IDs stable, do not recycle deleted IDs. Cover every
-requirement with tasks and a check; existing behavior may use a regression check.
-No empty sections, duplicated prose, chat transcripts or separate artifacts.
+Use optional `## Questions` for unresolved decisions and omit it once resolved.
+Each target has one base and at most one `### <spec-id>` block. Each requirement
+uses a unique local ID such as `R1`; qualify references as `<spec-id>/<R-id>`.
+`ADDED` requires an unused ID. `MODIFIED` and `REMOVED` require an existing ID.
+Keep existing IDs and avoid reusing retired ones. `REMOVED` has no body.
+An existing target can omit its block when included only as a baseline check.
+Omit `Spec changes` when there are no operations.
+A new spec requires `METADATA` and at least one `ADDED`. For an existing spec,
+include `METADATA` only to change its title, Scope or Goal. Supply all three
+fields, using the existing values for unchanged fields. Goal may continue on
+indented lines. Scope is `global` or `area:<kebab-case>`. For work entirely
+outside the spec corpus, omit both `Targets` and `Spec changes`.
